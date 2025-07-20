@@ -1,0 +1,80 @@
+
+##  Salmon Quantification (Generic Script)
+
+```bash
+salmon quant \
+  --libType A \                          # Auto-detect library type
+  --index {input.salmon_index_path} \   # Path to the Salmon index
+  --mates1 {input.fastq1} \             # Read 1 FASTQ file
+  --mates2 {input.fastq2} \             # Read 2 FASTQ file
+  --output {output.quant_dir} \         # Output directory
+  --threads {threads} \                 # Number of threads
+  --dumpEq \                            # Output equivalence class info
+  --d \                                 # Output extra files for Terminus
+  --posBias \                           # Enable positional bias correction
+  --seqBias \                           # Enable sequence-specific bias correction
+  --gcBias \                            # Enable GC content bias correction
+  --numGibbsSamples 100                  # Use 100 bootstrap samples (Gibbs sampling)
+```
+
+##  Terminus – Group
+
+```bash
+for ACCESSION in `cat index_PE`
+do
+  echo "Processing library ${ACCESSION}"
+  terminus group \
+    --min-spread 0.1 \
+    --tolerance 0.001 \
+    --seed 10 \
+    --dir terminus_quant/${ACCESSION}_quant \
+    --out terminus/
+done
+```
+
+##  Terminus – Collapse
+
+```bash
+for ACCESSION in `cat index_PE`
+do
+  echo "Processing library ${ACCESSION}"
+  terminus collapse \
+    --threads 10 \
+    -c 0.5 \
+    --dirs terminus_quant/${ACCESSION}_quant \
+    --out terminus/
+done
+```
+
+##  Human Salmon Index Build (Gencode v38)
+
+```bash
+singularity exec /data/mendel/singularity_images/salmon_1.9.0.sif \
+  salmon index \
+  -t ref/gencode.v38.transcripts.fa \
+  -i salmon_index_k13 \
+  -p 8 \
+  -k 13
+```
+
+##  Human Salmon Quantification
+
+```bash
+for ACCESSION in `cat ref/index_human.txt`
+do
+  echo "Processing library ${ACCESSION}"
+  singularity exec -B /home/ /data/mendel/singularity_images/salmon_1.10.1.sif \
+    salmon quant \
+    -i salmon_index_k13/ \
+    -l A \
+    -1 rawdata/human/${ACCESSION}_1.fq.gz \
+    -2 rawdata/human/${ACCESSION}_2.fq.gz \
+    --validateMappings \
+    -o /home/izamamede/isoswitch/salmon_quant_human_k13/${ACCESSION}_quant \
+    --threads 8 \
+    --numGibbsSamples 100 \
+    -d \
+    --gcBias \
+    --seqBias
+done
+```
