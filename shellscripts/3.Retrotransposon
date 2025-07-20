@@ -1,0 +1,23 @@
+
+###  Create a BLAST database using hg38reps.fa
+```bash
+makeblastdb \
+  -in /home/izamamede/isoswitch/repeat_looking/hg38reps.fa \  # Input genome FASTA file
+  -dbtype nucl \                                              # Nucleotide database
+  -parse_seqids \                                             # Parse sequence IDs
+  -out /home/izamamede/isoswitch/repeat_looking/database/retro_db  # Output database name
+```
+
+### ⬆ Upload query sequences to server
+```bash
+scp sequences.fasta izamamede@150.164.24.185:/home/izamamede/isoswitch/repeat_looking/
+```
+
+###  Run BLASTN query
+```bash
+blastn \
+  -query /home/izamamede/isoswitch/repeat_looking/sequences.fasta \  # Query file
+  -db database/retro_db \                                            # BLAST database
+  -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore" \  # Output format
+  -out nblast_results.txt                                            # Output file
+```
